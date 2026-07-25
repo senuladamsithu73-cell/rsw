@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Memory For Bunny 🐰</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sacramento&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Refined Light Theme with White, Black Text, Gray, Ash, and Midnight Blue */
+      --bg-base: #F8F9FA;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --bg-card-hover: rgba(255, 255, 255, 0.98);
+      
+      --text-main: #121212;
+      --text-muted: #5A626A;
+      --text-dark: #000000;
+      
+      /* Accent Palette */
+      --accent-midnight: #0A192F;
+      --accent-midnight-soft: #1E2A38;
+      --color-ash: #E2E6EA;
+      --color-ash-dark: #B0B8C1;
+      --color-gray: #6C757D;
+      
+      --border-subtle: rgba(176, 184, 193, 0.4);
+      --shadow-premium: 0 16px 40px rgba(10, 25, 47, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+      --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.04);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 15%, rgba(10, 25, 47, 0.05) 0%, transparent 35%),
+        radial-gradient(circle at 90% 85%, rgba(176, 184, 193, 0.2) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+
+    /* Ambient Floating Canvas */
+    #ambient-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* App Wrapper */
+    .app-viewport {
+      width: 100%;
+      max-width: 720px;
+      min-height: 100vh;
+      padding: 32px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Section Control Logic */
+    .app-section {
+      width: 100%;
+      display: none;
+      opacity: 0;
+      transform: translateY(20px) scale(0.985);
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .app-section.active-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Premium Glassmorphic Card */
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 36px 30px;
+      box-shadow: var(--shadow-premium);
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Navigation Header Bar */
+    .nav-bar {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-chapter-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent-midnight);
+      background: var(--color-ash);
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--color-ash-dark);
+    }
+
+    /* Typography Utilities */
+    .font-serif {
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .section-subtitle {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 6px;
+      margin-bottom: 28px;
+    }
+
+    /* Interactive Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-midnight-soft), var(--accent-midnight));
+      color: #FFFFFF;
+      border: none;
+      padding: 16px 36px;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(10, 25, 47, 0.2);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(10, 25, 47, 0.3);
+      background: var(--text-dark);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* PAGE 1: PASSWORD LOCK SCREEN */
+    .lock-card-content {
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .lock-bunny-icon {
+      font-size: 4rem;
+      margin-bottom: 12px;
+      display: inline-block;
+      animation: floatHeroBunny 3.5s ease-in-out infinite;
+    }
+
+    @keyframes floatHeroBunny {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(2deg); }
+    }
+
+    .password-box-group {
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto 12px auto;
+      position: relative;
+    }
+
+    .pass-input {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      border: 2px solid var(--color-ash-dark);
+      background: #FFFFFF;
+      font-size: 1.4rem;
+      text-align: center;
+      letter-spacing: 8px;
+      font-weight: 700;
+      color: var(--text-dark);
+      outline: none;
+      transition: all 0.25s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .pass-input:focus {
+      border-color: var(--accent-midnight);
+      box-shadow: 0 0 0 4px rgba(10, 25, 47, 0.1);
+    }
+
+    .pass-hint-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      font-style: italic;
+    }
+
+    .shake-error {
+      animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
+    /* PAGE 2: TIMELINE SECTION */
+    .timeline-wrapper {
+      position: relative;
+      padding-left: 24px;
+      border-left: 2px dashed var(--accent-midnight);
+      margin-left: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .timeline-node {
+      position: relative;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -33px;
+      top: 20px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 3px solid var(--accent-midnight);
+      box-shadow: 0 0 0 3px rgba(10, 25, 47, 0.1);
+    }
+
+    .timeline-dot.highlight {
+      background: var(--accent-midnight);
+      border-color: #FFFFFF;
+      box-shadow: 0 0 0 4px var(--color-ash);
+    }
+
+    .timeline-card {
+      background: #FFFFFF;
+      padding: 20px 22px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-subtle);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .timeline-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-premium);
+    }
+
+    .timeline-date {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .timeline-badge {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: var(--color-ash);
+      color: var(--text-dark);
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--color-ash-dark);
+      letter-spacing: 0.3px;
+    }
+
+    .timeline-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* PAGE 3: MAIN MESSAGE CARDS */
+    .cards-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      width: 100%;
+    }
+
+    .reading-card {
+      background: #FFFFFF;
+      padding: 22px 24px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      border-left: 4px solid var(--accent-midnight);
+      line-height: 1.7;
+      font-size: 0.94rem;
+      color: var(--text-main);
+      border-top: 1px solid var(--border-subtle);
+      border-right: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .reading-card.apology-theme {
+      border-left-color: var(--color-gray);
+      background: #FAFAFA;
+    }
+
+    .reading-card.gratitude-theme {
+      border-left-color: var(--accent-midnight-soft);
+    }
+
+    .reading-card strong {
+      color: var(--text-dark);
+      font-weight: 700;
+    }
+
+    /* PAGE 4: SPECIAL QUOTE CARDS GRID */
+    .quotes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    .quote-badge-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      padding: 20px 16px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      box-shadow: var(--shadow-card);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.25s ease;
+    }
+
+    .quote-badge-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-premium);
+      border-color: var(--accent-midnight);
+    }
+
+    /* PAGE 5: PERSONAL LETTER SECTION */
+    .personal-letter-card {
+      background: #FFFFFF;
+      padding: 32px 28px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-ash-dark);
+      box-shadow: var(--shadow-card);
+      position: relative;
+      line-height: 1.8;
+      font-size: 0.95rem;
+      color: var(--text-main);
+    }
+
+    .personal-letter-card::before {
+      content: "💌";
+      position: absolute;
+      top: -16px;
+      right: 24px;
+      font-size: 1.8rem;
+      background: #FFFFFF;
+      padding: 0 6px;
+    }
+
+    /* PAGE 6: LUXURY GIFT BOX STAGE */
+    .gift-interactive-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 380px;
+      width: 100%;
+      position: relative;
+    }
+
+    .gift-box-3d {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      cursor: pointer;
+      margin-top: 40px;
+      transition: transform 0.3s ease;
+    }
+
+    .gift-box-3d:hover {
+      transform: scale(1.04);
+    }
+
+    .gift-box-base {
+      width: 160px;
+      height: 110px;
+      background: linear-gradient(135deg, #FFFFFF, var(--color-ash));
+      position: absolute;
+      bottom: 0;
+      border-radius: 0 0 16px 16px;
+      border: 1px solid var(--color-ash-dark);
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.06);
+      display: flex;
+      justify-content: center;
+    }
+
+    .gift-ribbon-vertical {
+      width: 30px;
+      height: 100%;
+      background: var(--accent-midnight);
+      border-left: 1px solid rgba(255,255,255,0.4);
+      border-right: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .gift-box-lid {
+      width: 172px;
+      height: 38px;
+      background: #FFFFFF;
+      border: 1px solid var(--color-ash-dark);
+      position: absolute;
+      top: 14px;
+      left: -6px;
+      border-radius: 8px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+      z-index: 4;
+      transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+      display: flex;
+      justify-content: center;
+    }
+
+    .gift-lid-ribbon {
+      width: 30px;
+      height: 100%;
+      background: var(--accent-midnight);
+    }
+
+    .gift-bow-top {
+      position: absolute;
+      top: -18px;
+      font-size: 2rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+
+    /* Opened Gift Animations */
+    .gift-box-3d.opened .gift-box-lid {
+      transform: translateY(-90px) rotate(-16deg);
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .revealed-bunny-holder {
+      position: absolute;
+      bottom: 20px;
+      opacity: 0;
+      transform: translateY(30px) scale(0.4);
+      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 3;
+    }
+
+    .gift-box-3d.opened .revealed-bunny-holder {
+      opacity: 1;
+      transform: translateY(-105px) scale(1);
+    }
+
+    .animated-bunny-sprite {
+      font-size: 4.8rem;
+      line-height: 1;
+      animation: gentleHop 1.6s ease-in-out infinite;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.05));
+    }
+
+    @keyframes gentleHop {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-14px); }
+    }
+
+    .held-poster-card {
+      background: #FFFFFF;
+      border: 2px solid var(--accent-midnight);
+      padding: 10px 22px;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-premium);
+      font-family: 'Sacramento', cursive;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-top: -6px;
+      white-space: nowrap;
+      transform: rotate(-1.5deg);
+    }
+
+    .gift-click-hint {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 18px;
+      animation: pulseHint 2s infinite;
+    }
+
+    @keyframes pulseHint {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* PAGE 7: FINAL ENDING SCREEN */
+    .final-ending-container {
+      text-align: center;
+      padding: 20px 10px;
+      width: 100%;
+    }
+
+    .glowing-names-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 12px;
+      text-shadow: 0 0 20px rgba(10, 25, 47, 0.15);
+    }
+
+    .bff-pill-badge {
+      display: inline-block;
+      background: var(--accent-midnight);
+      color: #FFFFFF;
+      padding: 8px 24px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: 1px solid var(--accent-midnight-soft);
+      box-shadow: var(--shadow-card);
+    }
+
+    .footer-credit {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 32px;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Particles Canvas -->
+  <canvas id="ambient-canvas"></canvas>
+
+  <div class="app-viewport">
+
+    <!-- PAGE 1: PASSWORD LOCK SECTION -->
+    <section class="app-section active-section" id="sec-lock">
+      <div class="glass-card">
+        <div class="lock-card-content">
+          <div class="lock-bunny-icon" id="heroBunny">🐰</div>
+          <h1 class="section-title">Private Memory For Bunny 🐰</h1>
+          <p class="section-subtitle">An exclusive digital keepsake created just for you</p>
+
+          <div class="password-box-group" id="passInputContainer">
+            <input type="password" id="passInput" class="pass-input" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric">
+          </div>
+          <p class="pass-hint-text">Password hint: "The day we became best friends"</p>
+
+          <button class="btn-primary" onclick="attemptUnlock()">
+            <span>Unlock Memory</span>
+            <span>✨</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 2: MEMORY TIMELINE SECTION -->
+    <section class="app-section" id="sec-timeline">
+      <div class="nav-bar">
+        <span class="section-chapter-tag">Timeline</span>
+      </div>
+
+      <div class="glass-card">
+        <h2 class="section-title">Our Memory Timeline 🗓️</h2>
+        <p class="section-subtitle">Important milestones in our journey together</p>
+
+        <div class="timeline-wrapper">
+          
+          <div class="timeline-node">
+            <div class="timeline-dot highlight"></div>
+            <div class="timeline-card">
+              <div class="timeline-date">
+                December 8, 2025
+                <span class="timeline-badge">Our Beginning 🤍</span>
+              </div>
+              <p class="timeline-desc">The day we officially became best friends. The start of an unforgettable bond.</p>
+            </div>
+          </div>
+
+
+
+          <div class="timeline-node">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+              <div class="timeline-date">19 May 2026</div>
+              <p class="timeline-desc">Growing closer and building silent understanding with every passing day.</p>
+            </div>
+          </div>
+
+          <div class="timeline-node">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+              <div class="timeline-date">5 June 2026</div>
+              <p class="timeline-desc">Creating moments of comfort and genuine friendship.</p>
+            </div>
+          </div>
+
+          <div class="timeline-node">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+              <div class="timeline-date">11 June 2026</div>
+              <p class="timeline-desc">Sharing thoughts, problems, and unconditional kindness.</p>
+            </div>
+          </div>
+
+          <div class="timeline-node">
+            <div class="timeline-dot"></div>
+            <div class="timeline-card">
+              <div class="timeline-date">14 June 2026</div>
+              <p class="timeline-desc">Strengthening our friendship through care and quiet effort.</p>
+            </div>
+          </div>
+
+          <div class="timeline-node">
+            <div class="timeline-dot highlight"></div>
+            <div class="timeline-card" style="border: 1.5px solid var(--accent-midnight);">
+              <div class="timeline-date">
+                18 June 2026
+                <span class="timeline-badge" style="background:var(--accent-midnight); color:#fff;">Best Memory 😂</span>
+              </div>
+              <p class="timeline-desc">The best day as best friends! We enjoyed every single moment, and I will cherish it forever.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <button class="btn-primary" style="width:100%; margin-top:32px;" onclick="navigateTo('sec-messages')">
+          <span>Read My Letter</span>
+          <span>💌</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 3: MAIN FRIENDSHIP MESSAGE SECTION -->
+    <section class="app-section" id="sec-messages">
+      <div class="nav-bar">
+        <span class="section-chapter-tag">My Letter</span>
+      </div>
+
+      <div class="glass-card">
+        <h2 class="section-title">Words From My Heart 📝</h2>
+        <p class="section-subtitle">Everything I have ever wanted to tell you</p>
+
+        <div class="cards-stack">
+          
+          <div class="reading-card">
+            You are not just my best friend; <strong>you are the best person I have ever met, Bunny.</strong>
+            <br><br>
+            Even though it has only been <strong>32 weeks and 5 days (5,496 hours)</strong> of our friendship, you did things for me that a person cannot do even in 10 years.
+          </div>
+
+          <div class="reading-card">
+            You know I overthink a lot, and before I met you, I always thought about having a best friend like the ones in dramas and cartoons. But I met a friend—the bestest friend—who is <strong>infinitely better than I ever imagined.</strong>
+          </div>
+
+          <div class="reading-card">
+            The best memory I have is the <strong>June 18 memory</strong>. We enjoyed that day so much, and I will never forget it! 😂 
+            <br><br>
+            You even sent me photos without hesitation, even though our friendship was not even one year old.
+          </div>
+
+          <div class="reading-card gratitude-theme">
+            I know you don't like physical touch, but you didn't even say a single word when I touched you. 
+            <br><br>
+            <strong>You always listened to my problems even when you had your own problems.</strong> You always thought about my happiness even when you were suffering inside because of your own troubles.
+          </div>
+
+          <div class="reading-card apology-theme">
+            The only thing I feel like I gave you was a burden. 😭 I did things you were not expecting from me, and I became another reason for your heartbreak. I know I was the worst friend you have met.
+          </div>
+
+          <div class="reading-card apology-theme">
+            Even your past friends never got scolded by me in that way, so I am really sorry. I know sorry is not enough and I cannot correct the mistakes I have done, but <strong>I promise it will not happen again.</strong> I promise I will never treat you that way again.
+          </div>
+
+          <div class="reading-card apology-theme">
+            Even though I scolded you and did not understand your situation, I always thought from my side instead of your side.
+          </div>
+
+          <div class="reading-card apology-theme">
+            I get jealous, not because I don’t trust you, but because <strong>I’m scared of losing you.</strong> I don’t like seeing you spend more time with others than with me. 
+            <br><br>
+            I know you want me to change, and I’m trying, but sometimes I can’t control these jealous feelings. <strong>I just hope you understand that it comes from how much I value our bond, not from a lack of trust. 🤍</strong>
+          </div>
+
+          <div class="reading-card gratitude-theme">
+            <strong>But you never gave up on me. You were always kind.</strong> You never said a single bad thing to me even when I was wrong. You apologized. I scolded you in a way that even your enemy would not, but the only thing you did was keep talking to me kindly and saying sorry.
+          </div>
+
+          <div class="reading-card gratitude-theme">
+            <strong>You never changed your energy towards me. You always stayed the same person.</strong>
+            <br><br>
+            I know I cannot fix all the mistakes I made and the things I did that broke your heart. But from now on, I am not that person. I will not do anything that hurts you. I will rebuild the heart that I broke, and I will understand you.
+          </div>
+
+          <div class="reading-card gratitude-theme">
+            I may feel like the worst person you have met, but <strong>thank you for choosing me as your best friend.</strong> Thank you for not giving up on me even when I was rude. Trust me, I will never do anything like that again.
+          </div>
+
+          <div class="reading-card">
+            Thank you for being the bestestestest friend. Thank you for bringing happiness into my life and not leaving me. I don't know how to thank you for staying. You treated me better than even my parents sometimes, and I will forever be grateful for you.
+          </div>
+
+          <div class="reading-card">
+            <strong>In every life, I need you.</strong> I don't know what the future holds, but I want us to be forever best friends with the same energy, same efforts, and <strong>no replacements.</strong>
+            <br><br>
+            Again, thank you for choosing me as your best friend even when you had many other friends. They would not treat you the way I badly treated you, so thank you is not enough. <strong>I am forever grateful for having you.</strong>
+          </div>
+
+        </div>
+
+        <button class="btn-primary" style="width:100%; margin-top:28px;" onclick="navigateTo('sec-quotes')">
+          <span>View Special Highlights</span>
+          <span>✨</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 4: SPECIAL QUOTE CARDS SECTION -->
+    <section class="app-section" id="sec-quotes">
+      <div class="nav-bar">
+        <span class="section-chapter-tag">Highlights</span>
+      </div>
+
+      <div class="glass-card">
+        <h2 class="section-title">Special Promises 💫</h2>
+        <p class="section-subtitle">Every sentiment etched in time</p>
+
+        <div class="quotes-grid">
+          <div class="quote-badge-card">You Are My Best Friend 🤍</div>
+          <div class="quote-badge-card">You Are My World 🌎</div>
+          <div class="quote-badge-card">Forever My Bunny 🐰</div>
+          <div class="quote-badge-card">No Replacements ✨</div>
+          <div class="quote-badge-card">Forever Grateful For You 🫶</div>
+          <div class="quote-badge-card">Best Friends Forever ⭐</div>
+        </div>
+
+        <button class="btn-primary" style="width:100%;" onclick="navigateTo('sec-personal')">
+          <span>Read Final Personal Note</span>
+          <span>✉️</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 5: PERSONAL MESSAGE SECTION -->
+    <section class="app-section" id="sec-personal">
+      <div class="nav-bar">
+        <span class="section-chapter-tag">One Last Note</span>
+      </div>
+
+      <div class="glass-card">
+        <h2 class="section-title">One Last Message From Me 🤍</h2>
+        <p class="section-subtitle">A final gentle reminder</p>
+
+        <div class="personal-letter-card">
+          Dear Ruhani (Bunny),
+          <br><br>
+          Thank you for reading every memory and every word I wrote. Creating this was just a small way to show how much your presence means to me. Thank you for not leaving me even when I was rude or made mistakes. 🫶
+          <br><br>
+          I hope you achieve all your dreams, become successful, and live a happy life. ✨ I hope one day you achieve your BMW dream 🚘 and feel proud of yourself. Even if I’m not there, I’ll always be happy and proud of your success. 🤍
+          <br><br>
+          Always stay the bright, beautiful soul you are.
+        </div>
+
+        <button class="btn-primary" style="width:100%; margin-top:28px;" onclick="navigateTo('sec-gift')">
+          <span>Unwrap Final Gift</span>
+          <span>🎁</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 6: FINAL GIFT SECTION -->
+    <section class="app-section" id="sec-gift">
+      <div class="nav-bar">
+        <span class="section-chapter-tag">Surprise</span>
+      </div>
+
+      <div class="glass-card gift-interactive-stage">
+        <h2 class="section-title">A Special Gift For Bunny 🐰✨</h2>
+        <p class="section-subtitle">Tap the box below to unwrap your surprise</p>
+
+        <div class="gift-box-3d" id="giftBox" onclick="openGiftBox()">
+          <div class="gift-box-lid">
+            <div class="gift-lid-ribbon"></div>
+            <div class="gift-bow-top">✨</div>
+          </div>
+          <div class="gift-box-base">
+            <div class="gift-ribbon-vertical"></div>
+          </div>
+
+          <div class="revealed-bunny-holder">
+            <div class="animated-bunny-sprite">🐰</div>
+            <div class="held-poster-card">Hi Mommy 😂🐰</div>
+          </div>
+        </div>
+
+        <p class="gift-click-hint" id="giftHint">Tap the luxury box to open!</p>
+
+        <button class="btn-primary" id="btnToEnding" style="width:100%; margin-top:36px; display:none;" onclick="navigateTo('sec-ending')">
+          <span>See Final Message</span>
+          <span>⭐</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 7: FINAL ENDING PAGE -->
+    <section class="app-section" id="sec-ending">
+      <div class="nav-bar">
+        <span class="section-chapter-tag">Forever</span>
+      </div>
+
+      <div class="glass-card final-ending-container">
+        <div style="font-size: 3rem; margin-bottom: 12px;">🐰 🤍 🌿</div>
+        <h2 class="glowing-names-title">Bunny + Hipatuwa = Ruhani + Senula</h2>
+        <div style="margin-top: 16px;">
+          <span class="bff-pill-badge">Best Friends Forever 🤍✨</span>
+        </div>
+        <p class="footer-credit">A timeless friendship memory. Thank you for choosing me.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    /* Navigation Engine (Forward Only) */
+    function navigateTo(targetId) {
+      const currentActive = document.querySelector('.app-section.active-section');
+      const targetSection = document.getElementById(targetId);
+
+      if (currentActive && currentActive !== targetSection) {
+        currentActive.style.opacity = '0';
+        currentActive.style.transform = 'translateY(-12px)';
+
+        setTimeout(() => {
+          currentActive.classList.remove('active-section');
+          currentActive.style.transform = '';
+
+          targetSection.classList.add('active-section');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 380);
+      } else {
+        targetSection.classList.add('active-section');
+      }
+    }
+
+    /* Password Unlock Engine */
+    function attemptUnlock() {
+      const passInput = document.getElementById('passInput');
+      const passContainer = document.getElementById('passInputContainer');
+      const bunnyIcon = document.getElementById('heroBunny');
+
+      if (passInput.value === '1208') {
+        bunnyIcon.innerText = '🥳';
+        setTimeout(() => {
+          navigateTo('sec-timeline');
+        }, 300);
+      } else {
+        passContainer.classList.add('shake-error');
+        bunnyIcon.innerText = '😿';
+        setTimeout(() => {
+          passContainer.classList.remove('shake-error');
+          bunnyIcon.innerText = '🐰';
+        }, 600);
+      }
+    }
+
+    // Auto trigger unlock if user types 4 digits
+    document.getElementById('passInput').addEventListener('input', (e) => {
+      if (e.target.value.length === 4) {
+        attemptUnlock();
+      }
+    });
+
+    /* Interactive Gift Box Engine */
+    let isBoxOpened = false;
+    function openGiftBox() {
+      if (isBoxOpened) return;
+      isBoxOpened = true;
+
+      const box = document.getElementById('giftBox');
+      const hint = document.getElementById('giftHint');
+      const endingBtn = document.getElementById('btnToEnding');
+
+      box.classList.add('opened');
+      hint.style.display = 'none';
+
+      // Burst Celebration Confetti
+      spawnCelebrationParticles();
+
+      setTimeout(() => {
+        endingBtn.style.display = 'inline-flex';
+      }, 700);
+    }
+
+    /* Ambient Floating Particle System */
+    const canvas = document.getElementById('ambient-canvas');
+    const ctx = canvas.getContext('2d');
+    let particleList = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class AmbientParticle {
+      constructor(x, y, isBurst = false) {
+        this.x = x || Math.random() * canvas.width;
+        this.y = y || Math.random() * canvas.height;
+        this.isBurst = isBurst;
+
+        if (isBurst) {
+          this.size = Math.random() * 8 + 4;
+          this.speedX = (Math.random() - 0.5) * 10;
+          this.speedY = Math.random() * -8 - 4;
+          this.gravity = 0.22;
+          this.color = ['#0A192F', '#1E2A38', '#B0B8C1', '#6C757D'][Math.floor(Math.random() * 4)];
+          this.alpha = 1;
+        } else {
+          this.size = Math.random() * 12 + 10;
+          this.speedY = Math.random() * -0.5 - 0.2;
+          this.speedX = (Math.random() - 0.5) * 0.3;
+          this.symbol = ['🤍', '✨', '🌿', '💫', '⭐'][Math.floor(Math.random() * 5)];
+          this.alpha = Math.random() * 0.35 + 0.1;
+        }
+      }
+
+      update() {
+        if (this.isBurst) {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.speedY += this.gravity;
+          this.alpha -= 0.016;
+        } else {
+          this.y += this.speedY;
+          this.x += this.speedX;
+          if (this.y < -30) {
+            this.y = canvas.height + 30;
+            this.x = Math.random() * canvas.width;
+          }
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        if (this.isBurst) {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.font = `${this.size}px sans-serif`;
+          ctx.fillText(this.symbol, this.x, this.y);
+        }
+        ctx.restore();
+      }
+    }
+
+    // Populate ambient floating elements
+    for (let i = 0; i < 22; i++) {
+      particleList.push(new AmbientParticle());
+    }
+
+    function spawnCelebrationParticles() {
+      const boxRect = document.getElementById('giftBox').getBoundingClientRect();
+      const centerX = boxRect.left + boxRect.width / 2;
+      const centerY = boxRect.top + boxRect.height / 2;
+
+      for (let i = 0; i < 60; i++) {
+        particleList.push(new AmbientParticle(centerX, centerY, true));
+      }
+    }
+
+    function particleLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particleList.forEach((p, idx) => {
+        p.update();
+        p.draw();
+        if (p.isBurst && p.alpha <= 0) {
+          particleList.splice(idx, 1);
+        }
+      });
+      requestAnimationFrame(particleLoop);
+    }
+    particleLoop();
+  </script>
+</body>
+</html>
